@@ -12,6 +12,11 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+  Update 18-04-2026 by Fedor
+  Implement change in ArduinoJson version 6 to 7
+  - StaticJsonDocument<256> doc;
+  + JsonDocument doc;
 */
 
 #include "FS.h"               // SPIFFS for store config
@@ -81,7 +86,8 @@ unsigned int hpConnectionTotalRetries;
 unsigned long lastRemoteTemp;
 
 //Local state
-StaticJsonDocument<JSON_OBJECT_SIZE(12)> rootInfo;
+// StaticJsonDocument<JSON_OBJECT_SIZE(12)> rootInfo;
+JsonDocument rootInfo;
 
 //Web OTA
 int uploaderror = 0;
@@ -230,8 +236,9 @@ bool loadWifi() {
   // Allocate a buffer to store contents of the file.
   std::unique_ptr<char[]> buf(new char[size]);
   configFile.readBytes(buf.get(), size);
-  const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   deserializeJson(doc, buf.get());
   hostname = doc["hostname"].as<String>();
   ap_ssid  = doc["ap_ssid"].as<String>();
@@ -264,8 +271,9 @@ bool loadMqtt() {
   std::unique_ptr<char[]> buf(new char[size]);
 
   configFile.readBytes(buf.get(), size);
-  const size_t capacity = JSON_OBJECT_SIZE(6) + 400;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(6) + 400;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   deserializeJson(doc, buf.get());
   mqtt_fn             = doc["mqtt_fn"].as<String>();
   mqtt_server         = doc["mqtt_host"].as<String>();
@@ -304,8 +312,9 @@ bool loadUnit() {
   std::unique_ptr<char[]> buf(new char[size]);
 
   configFile.readBytes(buf.get(), size);
-  const size_t capacity = JSON_OBJECT_SIZE(3) + 200;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(3) + 200;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   deserializeJson(doc, buf.get());
   //unit
   String unit_tempUnit            = doc["unit_tempUnit"].as<String>();
@@ -342,8 +351,9 @@ bool loadOthers() {
   std::unique_ptr<char[]> buf(new char[size]);
 
   configFile.readBytes(buf.get(), size);
-  const size_t capacity = JSON_OBJECT_SIZE(4) + 200;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(4) + 200;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   deserializeJson(doc, buf.get());
   //unit
   String unit_tempUnit    = doc["unit_tempUnit"].as<String>();
@@ -366,8 +376,9 @@ bool loadOthers() {
 void saveMqtt(String mqttFn, String mqttHost, String mqttPort, String mqttUser,
               String mqttPwd, String mqttTopic) {
 
-  const size_t capacity = JSON_OBJECT_SIZE(6) + 400;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(6) + 400;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   // if mqtt port is empty, we use default port
   if (mqttPort[0] == '\0') mqttPort = "1883";
   doc["mqtt_fn"]   = mqttFn;
@@ -385,8 +396,9 @@ void saveMqtt(String mqttFn, String mqttHost, String mqttPort, String mqttUser,
 }
 
 void saveUnit(String tempUnit, String supportMode, String loginPassword, String minTemp, String maxTemp, String tempStep) {
-  const size_t capacity = JSON_OBJECT_SIZE(6) + 200;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(6) + 200;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   // if temp unit is empty, we use default celcius
   if (tempUnit.isEmpty()) tempUnit = "cel";
   doc["unit_tempUnit"]   = tempUnit;
@@ -415,8 +427,9 @@ void saveUnit(String tempUnit, String supportMode, String loginPassword, String 
 }
 
 void saveWifi(String apSsid, String apPwd, String hostName, String otaPwd) {
-  const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   doc["ap_ssid"] = apSsid;
   doc["ap_pwd"] = apPwd;
   doc["hostname"] = hostName;
@@ -431,8 +444,9 @@ void saveWifi(String apSsid, String apPwd, String hostName, String otaPwd) {
 }
 
 void saveOthers(String haa, String haat, String debugPckts, String debugLogs) {
-  const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
-  DynamicJsonDocument doc(capacity);
+  // const size_t capacity = JSON_OBJECT_SIZE(4) + 130;
+  // DynamicJsonDocument doc(capacity);
+  JsonDocument doc;
   doc["haa"] = haa;
   doc["haat"] = haat;
   doc["debugPckts"] = debugPckts;
@@ -1415,8 +1429,9 @@ void hpPacketDebug(byte* packet, unsigned int length, const char* packetDirectio
       message += String(packet[idx], HEX) + " ";
     }
 
-    const size_t bufferSize = JSON_OBJECT_SIZE(10);
-    StaticJsonDocument<bufferSize> root;
+    // const size_t bufferSize = JSON_OBJECT_SIZE(10);
+    // StaticJsonDocument<bufferSize> root;
+    JsonDocument root;
 
     root[packetDirection] = message;
     String mqttOutput;
@@ -1596,8 +1611,9 @@ void haConfig() {
 
   // send HA config packet
   // setup HA payload device
-  const size_t capacity = JSON_ARRAY_SIZE(5) + 2 * JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(7) + JSON_OBJECT_SIZE(24) + 2048;
-  DynamicJsonDocument haConfig(capacity);
+  // const size_t capacity = JSON_ARRAY_SIZE(5) + 2 * JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(7) + JSON_OBJECT_SIZE(24) + 2048;
+  // DynamicJsonDocument haConfig(capacity);
+  JsonDocument haConfig;
 
   haConfig["name"]                          = nullptr;
   haConfig["unique_id"]                     = getId();
